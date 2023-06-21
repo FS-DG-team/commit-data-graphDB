@@ -165,3 +165,5 @@ key/*
 datasets/*
 !*/README.md
 
+/dataset/*
+dataset.zip
