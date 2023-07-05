@@ -1,6 +1,6 @@
 import os
 
-dataset_path = "/Users/dado/Downloads/dataset"
+dataset_path = ""
 output_path = "./dataset"
 
 os.makedirs(output_path, exist_ok=True)
