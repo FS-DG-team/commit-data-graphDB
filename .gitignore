@@ -166,7 +166,7 @@ key/*
 # readme file
 !*/README.md
 
-/dataset/*
+/datasets/*
 dataset.zip
 
 
