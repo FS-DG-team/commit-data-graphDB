@@ -23,7 +23,7 @@ function configure() {
     
     echo "Configuring $module"
     for c in `printenv | perl -sne 'print "$1 " if m/^${envPrefix}_(.+?)=.*/' -- -envPrefix=$envPrefix`; do 
-        name=`echo ${c} | perl -pe 's/___/-/g; s/__/@/g; s/_/./g; s/@/_/g;'`
+        name=`echo ${c} | perl -pe 's/___/-/g; s/__/_/g; s/_/./g'`
         var="${envPrefix}_${c}"
         value=${!var}
         echo " - Setting $name=$value"
@@ -37,6 +37,7 @@ configure /etc/hadoop/yarn-site.xml yarn YARN_CONF
 configure /etc/hadoop/httpfs-site.xml httpfs HTTPFS_CONF
 configure /etc/hadoop/kms-site.xml kms KMS_CONF
 configure /etc/hadoop/mapred-site.xml mapred MAPRED_CONF
+configure /opt/hive/conf/hive-site.xml hive HIVE_SITE_CONF
 
 if [ "$MULTIHOMED_NETWORK" = "1" ]; then
     echo "Configuring for multihomed network"
@@ -51,6 +52,7 @@ if [ "$MULTIHOMED_NETWORK" = "1" ]; then
 
     # YARN
     addProperty /etc/hadoop/yarn-site.xml yarn.resourcemanager.bind-host 0.0.0.0
+    addProperty /etc/hadoop/yarn-site.xml yarn.nodemanager.bind-host 0.0.0.0
     addProperty /etc/hadoop/yarn-site.xml yarn.nodemanager.bind-host 0.0.0.0
     addProperty /etc/hadoop/yarn-site.xml yarn.timeline-service.bind-host 0.0.0.0
 
