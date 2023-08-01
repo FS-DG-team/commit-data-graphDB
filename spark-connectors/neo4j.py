@@ -3,8 +3,8 @@ import os
 
 credentials = os.environ["NEO4J_AUTH"]
 username, password = credentials.split("/")
-# username = "neo4j"
-# password = "password"
+
+
 url = "bolt://neo4j:7687"
 
 # print(f"username: {username}, password: {password}")

@@ -122,7 +122,7 @@ services:
     container_name: presto-coordinator
     ports:
       - "8089:8089"
-  ne4j:
+  neo4j:
     image: neo4j:latest
     container_name: neo4j
     ports:
