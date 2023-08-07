@@ -182,6 +182,7 @@ services:
     environment:
       NEO4J_AUTH: "neo4j/password"
   
+<<<<<<< HEAD
   ####################
   #    ARANGO DB     #
   ####################
@@ -195,3 +196,15 @@ services:
     environment:
       ARANGO_ROOT_PASSWORD: "password"
       ARANGO_NO_AUTH: "1"
+  
+  redis:
+    networks:
+      - playground
+    image: redislabs/redisgraph:latest
+    container_name: redisgraph
+    ports:
+      - "6379:6379" # CLI
+    environment:
+      #REDIS_USERNAME: "root"
+      #REDIS_PASSWORD: "password"
+      ALLOW_EMPTY_PASSWORD: "yes"
