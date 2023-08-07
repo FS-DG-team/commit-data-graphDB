@@ -176,3 +176,6 @@ dataset.zip
 
 # jar files
 *.jar
+
+# connectors dependencies
+!**/jars/*
