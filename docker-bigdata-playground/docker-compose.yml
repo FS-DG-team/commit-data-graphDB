@@ -196,14 +196,16 @@ services:
       ARANGO_ROOT_PASSWORD: "password"
       ARANGO_NO_AUTH: "1"
   
-  redis:
+  tigergraph:
     networks:
       - playground
-    image: redislabs/redisgraph:latest
-    container_name: redisgraph
+    image: tigergraph/tigergraph:latest
+    container_name: tigergraph
     ports:
-      - "6379:6379" # CLI
+      - "14240:14240" # GUI
+      #- "9000:9000" # CLI
+      #- "14241:14241" # RESTPP
+      #- "14243:14243" # GSQL
     environment:
-      #REDIS_USERNAME: "root"
-      #REDIS_PASSWORD: "password"
-      ALLOW_EMPTY_PASSWORD: "yes"
+      TIGERGRAPH_USERNAME: "root"
+      TIGERGRAPH_PASSWORD: "password"
