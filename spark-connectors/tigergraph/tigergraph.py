@@ -1,15 +1,16 @@
 import pyspark as spark
 import os
 
-username, password = "root", "password"
+username, password = "tigergraph", "tigergraph"
 
 
-url = "tigergraph:9000"
+url = "jdbc:tg:http://tigergraph:14240"
 
 # print(f"username: {username}, password: {password}")
 
 session = spark.sql.SparkSession.builder \
     .appName("Spark TigerGraph") \
+    .config("spark.driver.extraClassPath", "/connectors/tigergraph/jars/postgresql-42.5.0.jar:/connectors/tigergraph/jars/tigergraph-jdbc-driver-1.3.6.jar") \
     .getOrCreate()
 
 # hdfs_path = "/dado/commits.json"
@@ -30,11 +31,9 @@ df.write \
     .option("url", url) \
     .option("user", username) \
     .option("password", password) \
-    .option("dbtable", "vertex Account") \
-    .option("debug", "1") \
-    .option("trustStore", "trust.jks") \
-    .option("trustStorePassword", "password") \
-    .option("trustStoreType", "JKS") \
+    .option("graph", "Test") \
+    .option("dbtable", "vertex Persone") \
+    .option("debug", "0") \
     .save()
 
 # https://docs.tigergraph.com/cloud/solutions/access-solution/jdbc

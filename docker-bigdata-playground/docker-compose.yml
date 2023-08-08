@@ -203,7 +203,7 @@ services:
     container_name: tigergraph
     ports:
       - "14240:14240" # GUI
-      #- "9000:9000" # CLI
+      # - "9001:9000" # CLI
       #- "14241:14241" # RESTPP
       #- "14243:14243" # GSQL
     environment:
