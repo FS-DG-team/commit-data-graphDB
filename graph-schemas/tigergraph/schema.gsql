@@ -1,0 +1,17 @@
+# vertices creation
+CREATE VERTEX GitContributor (PRIMARY_ID id STRING, name STRING, email STRING)
+CREATE VERTEX GitCommit (PRIMARY_ID id STRING, title STRING, message STRING, commit_date DATETIME) WITH primary_id_as_attribute="true"
+CREATE VERTEX GitRepository (PRIMARY_ID id STRING, name STRING, watch_count UINT)
+CREATE VERTEX GitLanguage (PRIMARY_ID id STRING, name STRING)
+CREATE VERTEX GitFile (PRIMARY_ID id STRING, reference STRING, path STRING, mode UINT, simlink_target STRING)  WITH primary_id_as_attribute="true"
+CREATE VERTEX GitLicence (PRIMARY_ID id STRING, name STRING)
+# edges creation
+CREATE DIRECTED EDGE AUTHOR (From GitContributor, To GitCommit, ts UINT)
+CREATE DIRECTED EDGE COMMITED (From GitContributor, To GitCommit, ts UINT)
+CREATE DIRECTED EDGE PARENT (From GitCommit, To GitCommit)
+CREATE DIRECTED EDGE BELONGS_TO (From GitCommit, To GitRepository) 
+CREATE DIRECTED EDGE WRITTEN_IN (From GitRepository, To GitLanguage, bytes UINT)
+CREATE DIRECTED EDGE HAS (From GitRepository, To GitLicence)
+CREATE DIRECTED EDGE STAYS_IN (From GitFile, To GitRepository)
+# graph creation
+CREATE GRAPH Git (GitContributor, GitCommit, GitRepository, GitLanguage, GitFile, GitLicence, AUTHOR, COMMITED, PARENT, BELONGS_TO, WRITTEN_IN, HAS, STAYS_IN)

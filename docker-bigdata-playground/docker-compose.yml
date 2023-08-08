@@ -201,6 +201,8 @@ services:
       - playground
     image: tigergraph/tigergraph:latest
     container_name: tigergraph
+    volumes:
+      - ../graph-schemas/tigergraph:/graph-schema
     ports:
       - "14240:14240" # GUI
       # - "9001:9000" # CLI
