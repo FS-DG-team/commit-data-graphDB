@@ -1,4 +1,5 @@
-FROM jupyter/pyspark-notebook:spark-3.3.0
+# Spark 3.0.0 and python 3.7 
+FROM jupyter/pyspark-notebook:b86753318aa1
 
 LABEL mantainer="Dario Bertolino"
 

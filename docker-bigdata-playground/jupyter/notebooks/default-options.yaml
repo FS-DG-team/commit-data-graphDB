@@ -1,0 +1,20 @@
+neo4j:
+  url: bolt://neo4j:7687
+  authentication.basic.username: neo4j
+  authentication.basic.password: password
+
+arangodb:
+  endpoints: arangodb:8529
+  user: root
+  password: password
+  database: _system
+  collection: Test
+
+tigergraph:
+  url: jdbc:tg:http://tigergraph:14240
+  driver: com.tigergraph.jdbc.Driver
+  user: tigergraph
+  password: tigergraph
+  graph: Test
+  debug: 0
+ 

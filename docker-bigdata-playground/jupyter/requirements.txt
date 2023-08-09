@@ -1,2 +1,3 @@
-pandas==2.0.1
-jupyter_contrib_nbextensions==0.7.0
+pandas
+jupyter_contrib_nbextensions
+pyyaml

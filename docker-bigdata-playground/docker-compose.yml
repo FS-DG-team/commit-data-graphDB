@@ -26,7 +26,7 @@ services:
         - ../spark-connectors:/connectors
     environment:
       INIT_DAEMON_STEP: "setup_spark"
-      NEO4J_AUTH: "neo4j/password"
+      CONNECTORS_DEFAULT_OPTIONS: "/connectors/default-options.json"
 
   spark-worker-1:
     networks:
@@ -167,6 +167,8 @@ services:
         - ./data:/home/jovyan/data
         - ./jupyter/notebooks:/home/jovyan/notebooks
       container_name: jupyter-notebooks
+      environment:
+        CONNECTORS_DEFAULT_OPTIONS: "default-options.yaml"
 
   ####################
   #       NEO4J      #
@@ -196,6 +198,9 @@ services:
       ARANGO_ROOT_PASSWORD: "password"
       ARANGO_NO_AUTH: "1"
   
+  ####################
+  #    TIGERGRAPH    #
+  ####################
   tigergraph:
     networks:
       - playground
