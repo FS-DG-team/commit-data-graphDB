@@ -1,20 +1,9 @@
-import pyspark as spark
-import os
+import sys
 
-username, password = "tigergraph", "tigergraph"
+sys.path.append("/connectors")
+from utilities import *
 
-
-url = "jdbc:tg:http://tigergraph:14240"
-
-# print(f"username: {username}, password: {password}")
-
-session = spark.sql.SparkSession.builder \
-    .appName("Spark TigerGraph") \
-    .config("spark.driver.extraClassPath", "/connectors/tigergraph/jars/postgresql-42.5.0.jar:/connectors/tigergraph/jars/tigergraph-jdbc-driver-1.3.6.jar") \
-    .getOrCreate()
-
-# hdfs_path = "/dado/commits.json"
-# df = spark.read.json(f"hdfs://namenode:9000{hdfs_path}")
+session = create_spark_session("TigerGraph", SparkConnector.TIGERGRAPH)
 
 data = [(1, "John"),
         (2, "Alice"),
@@ -24,16 +13,11 @@ data = [(1, "John"),
 columns = ["id", "name"]
 df = session.createDataFrame(data, columns)
 
-df.write \
-    .mode("overwrite") \
-    .format("jdbc") \
-    .option("driver", "com.tigergraph.jdbc.Driver") \
-    .option("url", url) \
-    .option("user", username) \
-    .option("password", password) \
-    .option("graph", "Test") \
-    .option("dbtable", "vertex Persone") \
-    .option("debug", "0") \
-    .save()
+options = get_default_options(SparkConnector.TIGERGRAPH)
+
+options["dbtable"] = "vertex Person"
+
+spark_write(SparkConnector.TIGERGRAPH, df, "Overwrite", options=options)
+
 
 # https://docs.tigergraph.com/cloud/solutions/access-solution/jdbc

@@ -1,20 +1,9 @@
-import pyspark as spark
-import os
+import sys
 
-credentials = os.environ["NEO4J_AUTH"]
-username, password = credentials.split("/")
+sys.path.append("/connectors")
+from utilities import *
 
-
-url = "bolt://neo4j:7687"
-
-# print(f"username: {username}, password: {password}")
-
-session = spark.sql.SparkSession.builder \
-    .appName("Spark Neo4j") \
-    .getOrCreate()
-
-# hdfs_path = "/dado/commits.json"
-# df = spark.read.json(f"hdfs://namenode:9000{hdfs_path}")
+session = create_spark_session("Neo4j", SparkConnector.NEO4J)
 
 data = [(1, "John"),
         (2, "Alice"),
@@ -24,12 +13,8 @@ data = [(1, "John"),
 columns = ["id", "name"]
 df = session.createDataFrame(data, columns)
 
-# Write to Neo4j
-df.write.format("org.neo4j.spark.DataSource") \
-    .mode("Overwrite") \
-    .option("url", url) \
-    .option("authentication.basic.username", username) \
-    .option("authentication.basic.password", password) \
-    .option("node.keys", "id") \
-    .option("labels", ":Person") \
-    .save()
+options = get_default_options(SparkConnector.NEO4J)
+options["node.keys"] = "id"
+options["labels"] = ":Person"
+
+spark_write(SparkConnector.NEO4J, df, "Overwrite", options=options)
