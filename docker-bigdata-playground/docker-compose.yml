@@ -22,11 +22,8 @@ services:
     ports:
       - "8080:8080"
       - "7077:7077"
-    volumes:
-        - ../spark-connectors:/connectors
     environment:
       INIT_DAEMON_STEP: "setup_spark"
-      CONNECTORS_DEFAULT_OPTIONS: "/connectors/default-options.json"
 
   spark-worker-1:
     networks:
