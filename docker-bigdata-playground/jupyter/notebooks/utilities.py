@@ -1,4 +1,5 @@
 from pyspark.sql import SparkSession
+from pyspark.sql.dataframe import DataFrame
 from enum import Enum
 import yaml, os
 
@@ -53,13 +54,25 @@ def create_spark_session(app_name: str, connector: SparkConnector):
     return build.getOrCreate()
 
 
-def spark_write(connector, df, mode, options):
+def spark_write(connector: SparkConnector, df: DataFrame, mode: str, options: dict):
     # Get the connector format
-    format = globals()[f"{connector.name}_FORMAT"]
-    print("format: \n", format)
-    print("oprtions: \n", options)
+    format = globals()[f"{connector.vlue}_FORMAT"]
 
     df.write.mode(mode) \
         .format(format) \
         .options(**options) \
         .save()
+    
+    print(f"Dataframe saved to {connector.name}")
+
+def spark_read(connector: SparkConnector, session: SparkSession, options: dir) -> DataFrame:
+    # Get the connector format
+    format = globals()[f"{connector.name}_FORMAT"]
+
+    df = session.read \
+        .format(format) \
+        .options(**options) \
+        .load()
+    
+    print(f"Dataframe loaded from {connector.value}")
+    return df
