@@ -1,0 +1,8 @@
+# vertices creation
+CREATE VERTEX Person (PRIMARY_ID id STRING, name STRING)
+
+# edges creation
+CREATE DIRECTED EDGE FRIEND (From Person, To Person)
+
+# graph creation
+CREATE GRAPH Test (Person, FRIEND)

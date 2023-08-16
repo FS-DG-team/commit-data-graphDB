@@ -201,13 +201,18 @@ services:
   tigergraph:
     networks:
       - playground
-    image: tigergraph/tigergraph:latest
+    build: ./tigergraph/
     container_name: tigergraph
     volumes:
-      - ../graph-schemas/tigergraph:/graph-schema
+      - ./tigergraph/graph-schemas/:/home/tigergraph/graph-schemas/
+    healthcheck:
+            test: ["CMD-SHELL", "curl --fail http://localhost:9000/echo || exit 1"]
+            interval: 5s
+            timeout: 10s
+            retries: 5
     ports:
       - "14240:14240" # GUI
-      # - "9001:9000" # CLI
+      - "9001:9000" # CLI
       #- "14241:14241" # RESTPP
       #- "14243:14243" # GSQL
     environment:
