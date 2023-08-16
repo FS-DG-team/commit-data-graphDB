@@ -30,12 +30,22 @@ services:
       - playground
     image: bde2020/spark-worker:3.3.0-hadoop3.3
     container_name: spark-worker-1
-    volumes:
-        - ./data:/home/jovyan/data
     depends_on:
       - spark-master
     ports:
       - "8081:8081"
+    environment:
+      SPARK_MASTER: "spark://spark-master:7077"
+
+  spark-worker-2:
+    networks:
+      - playground
+    image: bde2020/spark-worker:3.3.0-hadoop3.3
+    container_name: spark-worker-2
+    depends_on:
+      - spark-master
+    ports:
+      - "8082:8081"
     environment:
       SPARK_MASTER: "spark://spark-master:7077"
   
@@ -161,7 +171,6 @@ services:
       ports:
         - "8888:8888"
       volumes:
-        - ./data:/home/jovyan/data
         - ./jupyter/notebooks:/home/jovyan/notebooks
       container_name: jupyter-notebooks
       environment:
@@ -175,6 +184,12 @@ services:
       - playground
     image: neo4j:latest
     container_name: neo4j
+    healthcheck:
+      test: ["CMD-SHELL", "wget http://localhost:7474 || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 3s
     ports:
       - "7474:7474" # GUI
       - "7687:7687" # CLI
@@ -189,6 +204,12 @@ services:
       - playground
     image: arangodb:latest
     container_name: arangodb
+    healthcheck:
+      test: ["CMD-SHELL", "wget http://localhost:8529 || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 3s
     ports:
       - "8529:8529" # GUI
     environment:
@@ -206,10 +227,11 @@ services:
     volumes:
       - ./tigergraph/graph-schemas/:/home/tigergraph/graph-schemas/
     healthcheck:
-            test: ["CMD-SHELL", "curl --fail http://localhost:9000/echo || exit 1"]
-            interval: 5s
-            timeout: 10s
-            retries: 5
+      test: ["CMD-SHELL", "curl --fail http://localhost:9000/echo || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 3s
     ports:
       - "14240:14240" # GUI
       - "9001:9000" # CLI
