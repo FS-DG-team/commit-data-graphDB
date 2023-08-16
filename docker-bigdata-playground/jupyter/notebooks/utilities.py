@@ -56,7 +56,7 @@ def create_spark_session(app_name: str, connector: SparkConnector):
 
 def spark_write(connector: SparkConnector, df: DataFrame, mode: str, options: dict):
     # Get the connector format
-    format = globals()[f"{connector.vlue}_FORMAT"]
+    format = globals()[f"{connector.name}_FORMAT"]
 
     df.write.mode(mode) \
         .format(format) \
