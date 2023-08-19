@@ -9,6 +9,8 @@ arangodb:
   password: password
   database: _system
   collection: Test
+  confirmTruncate: true
+  overwrite.mode: replace
 
 tigergraph:
   url: jdbc:tg:http://tigergraph:14240

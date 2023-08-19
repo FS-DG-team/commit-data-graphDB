@@ -76,3 +76,10 @@ def spark_read(connector: SparkConnector, session: SparkSession, options: dir) -
     
     print(f"Dataframe loaded from {connector.value}")
     return df
+
+def set_df_columns_nullable(spark, df, column_list, nullable=True):
+    for struct_field in df.schema:
+        if struct_field.name in column_list:
+            struct_field.nullable = nullable
+    df_mod = spark.createDataFrame(df.rdd, df.schema)
+    return df_mod
