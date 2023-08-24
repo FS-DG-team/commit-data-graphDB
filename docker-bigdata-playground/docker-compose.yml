@@ -75,6 +75,8 @@ services:
       - 9000:9000
     volumes:
       - hadoop_namenode:/hadoop/dfs/name
+      - ../datasets:/data
+      - ./namenode:/namenode
     environment:
       CLUSTER_NAME: "test"
     env_file:
@@ -88,7 +90,6 @@ services:
     restart: always
     volumes:
       - hadoop_datanode:/hadoop/dfs/data
-      - ../datasets:/data
     environment:
       SERVICE_PRECONDITION: "namenode:9870"
     env_file:
