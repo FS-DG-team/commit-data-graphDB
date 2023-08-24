@@ -1,9 +1,10 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.dataframe import DataFrame
 from enum import Enum
-import yaml, os
+import yaml
+import os
 
-SPARK_MASTER_URL="spark://spark-master:7077"
+SPARK_MASTER_URL = "spark://spark-master:7077"
 
 NEO4J_FORMAT = "org.neo4j.spark.DataSource"
 ARANGO_FORMAT = "com.arangodb.spark"
@@ -21,27 +22,31 @@ class SparkConnector(Enum):
     ARANGO = "arangodb"
     TIGERGRAPH = "tigergraph"
 
+
 def get_default_options(connector: SparkConnector):
     # return { key : config [connector.value][key] for key in config[connector.value].keys() }
     options = {}
 
     for key in config[connector.value].keys():
-            options[key] = config[connector.value][key]
+        options[key] = config[connector.value][key]
 
     return options
 
 # Create the spark session for a given connector
+
+
 def create_spark_session(app_name: str, connector: SparkConnector):
     build = SparkSession.builder \
         .appName(app_name) \
         .master(SPARK_MASTER_URL) \
+        .config("spark.executor.memory", "3G") \
         .config("spark.authenticate", "false")
-    
+
     # Add the connector dependencies
     connectorsDepsDir = os.path.join(fileDir, "dependencies", connector.value)
 
-    lambdaMap = lambda x: os.path.join(connectorsDepsDir, x)
-    toListMap = lambda func, lst: list(map(func, lst))
+    def lambdaMap(x): return os.path.join(connectorsDepsDir, x)
+    def toListMap(func, lst): return list(map(func, lst))
 
     dependenciesFiles = os.listdir(connectorsDepsDir)
     dependencies = toListMap(lambdaMap, dependenciesFiles)
@@ -49,7 +54,7 @@ def create_spark_session(app_name: str, connector: SparkConnector):
 
     build = build.config("spark.jars", dependenciesStr) \
         .config("spark.driver.extraClassPath", dependenciesStr)
-    
+
     print("Added dependencies: \n", dependenciesFiles)
     return build.getOrCreate()
 
@@ -62,8 +67,9 @@ def spark_write(connector: SparkConnector, df: DataFrame, mode: str, options: di
         .format(format) \
         .options(**options) \
         .save()
-    
+
     print(f"Dataframe saved to {connector.name}")
+
 
 def spark_read(connector: SparkConnector, session: SparkSession, options: dir) -> DataFrame:
     # Get the connector format
@@ -73,9 +79,10 @@ def spark_read(connector: SparkConnector, session: SparkSession, options: dir) -
         .format(format) \
         .options(**options) \
         .load()
-    
+
     print(f"Dataframe loaded from {connector.value}")
     return df
+
 
 def set_df_columns_nullable(spark, df, column_list, nullable=True):
     for struct_field in df.schema:

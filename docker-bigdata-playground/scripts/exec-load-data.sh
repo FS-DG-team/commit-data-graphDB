@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker exec namenode bash ./load-data.sh 
+docker exec namenode bash ./namenode/load-data.sh 
