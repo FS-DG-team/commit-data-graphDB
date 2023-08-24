@@ -4,6 +4,13 @@ volumes:
   hadoop_namenode:
   hadoop_datanode:
   hadoop_historyserver:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
+  arangodb_data:
+  arangodb_apps_data:
+  tigergraph_data:
 
 networks:
   playground:
@@ -195,6 +202,11 @@ services:
       - "7687:7687" # CLI
     environment:
       NEO4J_AUTH: "neo4j/password"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
       
   ####################
   #    ARANGO DB     #
@@ -215,6 +227,10 @@ services:
     environment:
       ARANGO_ROOT_PASSWORD: "password"
       ARANGO_NO_AUTH: "1"
+    volumes:
+      - arangodb_data:/var/lib/arangodb3
+      - arangodb_apps_data:/var/lib/arangodb3-apps
+
   
   ####################
   #    TIGERGRAPH    #
@@ -226,6 +242,7 @@ services:
     container_name: tigergraph
     volumes:
       - ./tigergraph/graph-schemas/:/home/tigergraph/graph-schemas/
+      - tigergraph_data:/home/tigergraph/mydata
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:9000/echo || exit 1"]
       interval: 5s
