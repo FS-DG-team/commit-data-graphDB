@@ -1,7 +1,7 @@
 import os
 
 dataset_path = ""
-output_path = "./dataset"
+output_path = "./datasets"
 
 os.makedirs(output_path, exist_ok=True)
 
