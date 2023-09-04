@@ -17,6 +17,6 @@ tigergraph:
   driver: com.tigergraph.jdbc.Driver
   user: tigergraph
   password: tigergraph
-  graph: Test
+  graph: Git
   debug: 0
  
