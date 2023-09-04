@@ -16,4 +16,4 @@ CREATE DIRECTED EDGE HAS (From GitRepository, To GitLicense)
 CREATE DIRECTED EDGE STAYS_IN (From GitFile, To GitRepository)
 
 # graph creation
-CREATE GRAPH Git (GitContributor, GitCommit, GitRepository, GitLanguage, GitFile, GitLicense, AUTHOR, COMMITED, PARENT, BELONGS_TO, WRITTEN_IN, HAS, STAYS_IN)
+CREATE GRAPH Git (GitContributor, GitCommit, GitRepository, GitLanguage, GitFile, GitLicense, AUTHOR, COMMITTED, PARENT, BELONGS_TO, WRITTEN_IN, HAS, STAYS_IN)
