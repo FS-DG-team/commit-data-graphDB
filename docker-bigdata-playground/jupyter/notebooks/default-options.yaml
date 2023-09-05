@@ -2,6 +2,7 @@ neo4j:
   url: bolt://neo4j:7687
   authentication.basic.username: neo4j
   authentication.basic.password: password
+  batch.size: 10000
 
 arangodb:
   endpoints: arangodb:8529
@@ -17,6 +18,6 @@ tigergraph:
   driver: com.tigergraph.jdbc.Driver
   user: tigergraph
   password: tigergraph
-  graph: Test
+  graph: Git
   debug: 0
  
