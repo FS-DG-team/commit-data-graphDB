@@ -39,7 +39,7 @@ def create_spark_session(app_name: str, connector: SparkConnector):
     build = SparkSession.builder \
         .appName(app_name) \
         .master(SPARK_MASTER_URL) \
-        .config("spark.executor.memory", "3G") \
+        .config("spark.executor.memory", "5G") \
         .config("spark.authenticate", "false")
 
     # Add the connector dependencies
