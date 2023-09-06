@@ -22,6 +22,7 @@ CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git {
   TYPEDEF tuple<VERTEX<GitContributor> contributor, INT number> Result_Tuple;
   MapAccum<VERTEX<GitContributor>, SetAccum<STRING>> @@contributors2repos;
   HeapAccum<Result_Tuple>(N, number DESC) @@contributors2count;
+
   contributors = {GitContributor.*};
   
   p = SELECT con
@@ -35,4 +36,4 @@ CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git {
   PRINT @@contributors2count;
 }
 
-INSTALL QUERY TopNReposContributor;
+INSTALL QUERY TopNReposContributor
