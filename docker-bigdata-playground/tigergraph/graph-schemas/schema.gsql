@@ -17,3 +17,22 @@ CREATE DIRECTED EDGE STAYS_IN (From GitFile, To GitRepository)
 
 # graph creation
 CREATE GRAPH Git (GitContributor, GitCommit, GitRepository, GitLanguage, GitFile, GitLicense, AUTHOR, COMMITTED, PARENT, BELONGS_TO, WRITTEN_IN, HAS, STAYS_IN)
+
+CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git {
+  TYPEDEF tuple<VERTEX<GitContributor> contributor, INT number> Result_Tuple;
+  MapAccum<VERTEX<GitContributor>, SetAccum<STRING>> @@contributors2repos;
+  HeapAccum<Result_Tuple>(N, number DESC) @@contributors2count;
+  contributors = {GitContributor.*};
+  
+  p = SELECT con
+      FROM contributors:con -(AUTHOR>:a)- GitCommit:com -(BELONGS_TO>:b)- GitRepository:repo
+      ACCUM @@contributors2repos += (con -> repo.name);
+  
+  FOREACH (con, alist) IN @@contributors2repos DO
+    @@contributors2count += Result_Tuple(con, alist.size());
+  END;
+  
+  PRINT @@contributors2count;
+}
+
+INSTALL QUERY TopNReposContributor;
