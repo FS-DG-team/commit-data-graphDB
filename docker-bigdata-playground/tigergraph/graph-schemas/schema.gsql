@@ -20,10 +20,10 @@ CREATE DIRECTED EDGE STAYS_IN (From GitFile, To GitRepository)
 
 # graph creation
 CREATE GRAPH Git (GitContributor, GitCommit, GitRepository, GitLanguage, GitFile, GitLicense, AUTHOR, COMMITTED, PARENT, BELONGS_TO, WRITTEN_IN, HAS, STAYS_IN, COMMITTED_BY, MADE_BY, CONTAINS)
-
-CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git 
+USE GRAPH Git
+CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git
 {
-    TYPEDEF tuple<VERTEX<GitContributor> contributor, INT number> Result_Tuple;
+    TYPEDEF tuple<VERTEX<GitContributor> contributor, INT repo_count> Result_Tuple;
     MapAccum<VERTEX<GitContributor>, SetAccum<STRING>> @@contributors2repos;
     HeapAccum<Result_Tuple>(N, number DESC) @@contributors2count;
 
@@ -34,16 +34,19 @@ CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git
         ACCUM @@contributors2repos += (con -> repo.name);
 
     FOREACH (con, alist) IN @@contributors2repos DO
-    @@contributors2count += Result_Tuple(con, alist.size());
+        @@contributors2count += Result_Tuple(con, alist.size());
     END;
-
+  
     PRINT @@contributors2count;
 }
 
-CREATE QUERY ReposWithMorePercentageOnLenguage(FLOAT p, STRING lang) FOR GRAPH Git 
+INSTALL QUERY TopNReposContributor
+
+CREATE QUERY ReposWithMorePercentageOnLenguage(FLOAT p, STRING lang) FOR GRAPH Git
 {
+    TYPEDEF tuple<VERTEX<GitRepository> repo, FLOAT percentage> Result_Tuple;
     MapAccum <VERTEX<GitRepository>, MapAccum<STRING, FLOAT>> @@repos2lang2bytesCount;
-    MapAccum<VERTEX<GitRepository>, FLOAT> @@result;
+    ListAccum<Result_Tuple> @@result;
 
     repos = {GitRepository.*};
     s = SELECT r
@@ -62,12 +65,10 @@ CREATE QUERY ReposWithMorePercentageOnLenguage(FLOAT p, STRING lang) FOR GRAPH G
             END;
         END;
         IF (lang2bytesCount.containsKey(lang) AND @@langBytes / @@totalBytes > p) THEN
-            @@result += (r -> @@langBytes / @@totalBytes);
+            @@result += Result_Tuple(r, @@langBytes / @@totalBytes);
         END;
     END;
-    
     PRINT @@result;
 }
 
-INSTALL QUERY TopNReposContributor
 INSTALL QUERY ReposWithMorePercentageOnLenguage
