@@ -8,32 +8,66 @@ CREATE VERTEX GitFile (PRIMARY_ID id STRING, reference STRING, path STRING, mode
 
 # edges creation
 CREATE DIRECTED EDGE AUTHOR (From GitContributor, To GitCommit, ts UINT)
+CREATE DIRECTED EDGE MADE_BY (From GitCommit, To GitContributor, ts UINT)
 CREATE DIRECTED EDGE COMMITTED (From GitContributor, To GitCommit, ts UINT)
+CREATE DIRECTED EDGE COMMITTED_BY (From GitCommit, To GitContributor, ts UINT)
 CREATE DIRECTED EDGE PARENT (From GitCommit, To GitCommit)
 CREATE DIRECTED EDGE BELONGS_TO (From GitCommit, To GitRepository) 
+CREATE DIRECTED EDGE CONTAINS (From GitRepository, To GitCommit) 
 CREATE DIRECTED EDGE WRITTEN_IN (From GitRepository, To GitLanguage, bytes UINT)
 CREATE DIRECTED EDGE HAS (From GitRepository, To GitLicense)
 CREATE DIRECTED EDGE STAYS_IN (From GitFile, To GitRepository)
 
 # graph creation
-CREATE GRAPH Git (GitContributor, GitCommit, GitRepository, GitLanguage, GitFile, GitLicense, AUTHOR, COMMITTED, PARENT, BELONGS_TO, WRITTEN_IN, HAS, STAYS_IN)
+CREATE GRAPH Git (GitContributor, GitCommit, GitRepository, GitLanguage, GitFile, GitLicense, AUTHOR, COMMITTED, PARENT, BELONGS_TO, WRITTEN_IN, HAS, STAYS_IN, COMMITTED_BY, MADE_BY, CONTAINS)
 
-CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git {
-  TYPEDEF tuple<VERTEX<GitContributor> contributor, INT number> Result_Tuple;
-  MapAccum<VERTEX<GitContributor>, SetAccum<STRING>> @@contributors2repos;
-  HeapAccum<Result_Tuple>(N, number DESC) @@contributors2count;
+CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git 
+{
+    TYPEDEF tuple<VERTEX<GitContributor> contributor, INT number> Result_Tuple;
+    MapAccum<VERTEX<GitContributor>, SetAccum<STRING>> @@contributors2repos;
+    HeapAccum<Result_Tuple>(N, number DESC) @@contributors2count;
 
-  contributors = {GitContributor.*};
-  
-  p = SELECT con
-      FROM contributors:con -(AUTHOR>:a)- GitCommit:com -(BELONGS_TO>:b)- GitRepository:repo
-      ACCUM @@contributors2repos += (con -> repo.name);
-  
-  FOREACH (con, alist) IN @@contributors2repos DO
+    contributors = {GitContributor.*};
+
+    p = SELECT con
+        FROM contributors:con -(AUTHOR>:a)- GitCommit:com -(BELONGS_TO>:b)- GitRepository:repo
+        ACCUM @@contributors2repos += (con -> repo.name);
+
+    FOREACH (con, alist) IN @@contributors2repos DO
     @@contributors2count += Result_Tuple(con, alist.size());
-  END;
-  
-  PRINT @@contributors2count;
+    END;
+
+    PRINT @@contributors2count;
+}
+
+CREATE QUERY ReposWithMorePercentageOnLenguage(FLOAT p, STRING lang) FOR GRAPH Git 
+{
+    MapAccum <VERTEX<GitRepository>, MapAccum<STRING, FLOAT>> @@repos2lang2bytesCount;
+    ListAccum<VERTEX<GitRepository>> @@result;
+
+    repos = {GitRepository.*};
+    s = SELECT r
+        FROM repos:r -(WRITTEN_IN>:w)- GitLanguage:l
+        ACCUM @@repos2lang2bytesCount += (r -> (l.name -> w.bytes));
+
+    SumAccum<FLOAT> @@totalBytes;
+    SumAccum<FLOAT> @@langBytes;
+    FOREACH (r, lang2bytesCount) IN @@repos2lang2bytesCount DO
+        @@totalBytes = 0.0;
+        @@langBytes = 0.0;
+        FOREACH (l, bytesCount) IN lang2bytesCount DO
+            @@totalBytes += bytesCount;
+            IF (lang == l) THEN
+                @@langBytes = bytesCount;
+            END;
+        END;
+        IF (lang2bytesCount.containsKey(lang) AND @@langBytes / @@totalBytes > p) THEN
+            @@result += r;
+        END;
+    END;
+    
+    PRINT @@result;
 }
 
 INSTALL QUERY TopNReposContributor
+INSTALL QUERY ReposWithMorePercentageOnLenguage
