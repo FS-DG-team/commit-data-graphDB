@@ -43,7 +43,7 @@ CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git
 CREATE QUERY ReposWithMorePercentageOnLenguage(FLOAT p, STRING lang) FOR GRAPH Git 
 {
     MapAccum <VERTEX<GitRepository>, MapAccum<STRING, FLOAT>> @@repos2lang2bytesCount;
-    ListAccum<VERTEX<GitRepository>> @@result;
+    MapAccum<VERTEX<GitRepository>, FLOAT> @@result;
 
     repos = {GitRepository.*};
     s = SELECT r
@@ -62,7 +62,7 @@ CREATE QUERY ReposWithMorePercentageOnLenguage(FLOAT p, STRING lang) FOR GRAPH G
             END;
         END;
         IF (lang2bytesCount.containsKey(lang) AND @@langBytes / @@totalBytes > p) THEN
-            @@result += r;
+            @@result += (r -> @@langBytes / @@totalBytes);
         END;
     END;
     
