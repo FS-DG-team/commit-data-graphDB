@@ -20,8 +20,9 @@ CREATE DIRECTED EDGE STAYS_IN (From GitFile, To GitRepository)
 
 # graph creation
 CREATE GRAPH Git (GitContributor, GitCommit, GitRepository, GitLanguage, GitFile, GitLicense, AUTHOR, COMMITTED, PARENT, BELONGS_TO, WRITTEN_IN, HAS, STAYS_IN, COMMITTED_BY, MADE_BY, CONTAINS)
+
 USE GRAPH Git
-CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git
+CREATE QUERY TopNAuthorsWithMoreContributes(INT N) FOR GRAPH Git
 {
     TYPEDEF tuple<VERTEX<GitContributor> contributor, INT repo_count> Result_Tuple;
     MapAccum<VERTEX<GitContributor>, SetAccum<STRING>> @@contributors2repos;
@@ -42,7 +43,7 @@ CREATE QUERY TopNReposContributor(INT N) FOR GRAPH Git
 
 INSTALL QUERY TopNReposContributor
 
-CREATE QUERY ReposWithMorePercentageOnLenguage(FLOAT p, STRING lang) FOR GRAPH Git
+CREATE QUERY ReposWithMoreThenPercentageOnLenguage(FLOAT perc, STRING lang) FOR GRAPH Git
 {
     TYPEDEF tuple<VERTEX<GitRepository> repo, FLOAT percentage> Result_Tuple;
     MapAccum <VERTEX<GitRepository>, MapAccum<STRING, FLOAT>> @@repos2lang2bytesCount;
@@ -64,7 +65,7 @@ CREATE QUERY ReposWithMorePercentageOnLenguage(FLOAT p, STRING lang) FOR GRAPH G
                 @@langBytes = bytesCount;
             END;
         END;
-        IF (lang2bytesCount.containsKey(lang) AND @@langBytes / @@totalBytes > p) THEN
+        IF (lang2bytesCount.containsKey(lang) AND @@langBytes / @@totalBytes > perc) THEN
             @@result += Result_Tuple(r, @@langBytes / @@totalBytes);
         END;
     END;
