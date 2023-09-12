@@ -21,12 +21,11 @@ CREATE DIRECTED EDGE STAYS_IN (From GitFile, To GitRepository)
 # graph creation
 CREATE GRAPH Git (GitContributor, GitCommit, GitRepository, GitLanguage, GitFile, GitLicense, AUTHOR, COMMITTED, PARENT, BELONGS_TO, WRITTEN_IN, HAS, STAYS_IN, COMMITTED_BY, MADE_BY, CONTAINS)
 
-USE GRAPH Git
 CREATE QUERY TopNAuthorsWithMoreContributes(INT N) FOR GRAPH Git
 {
     TYPEDEF tuple<VERTEX<GitContributor> contributor, INT repo_count> Result_Tuple;
     MapAccum<VERTEX<GitContributor>, SetAccum<STRING>> @@contributors2repos;
-    HeapAccum<Result_Tuple>(N, number DESC) @@contributors2count;
+    HeapAccum<Result_Tuple>(N, repo_count DESC) @@contributors2count;
 
     contributors = {GitContributor.*};
 
@@ -41,7 +40,7 @@ CREATE QUERY TopNAuthorsWithMoreContributes(INT N) FOR GRAPH Git
     PRINT @@contributors2count;
 }
 
-INSTALL QUERY TopNReposContributor
+INSTALL QUERY TopNAuthorsWithMoreContributes
 
 CREATE QUERY ReposWithMoreThenPercentageOnLenguage(FLOAT perc, STRING lang) FOR GRAPH Git
 {
@@ -72,4 +71,33 @@ CREATE QUERY ReposWithMoreThenPercentageOnLenguage(FLOAT perc, STRING lang) FOR 
     PRINT @@result;
 }
 
-INSTALL QUERY ReposWithMorePercentageOnLenguage
+INSTALL QUERY ReposWithMoreThenPercentageOnLenguage
+
+CREATE QUERY CountMergeCommits(STRING repo_name) FOR GRAPH Git
+{
+    TYPEDEF tuple<INT mergeCount> Result_Tuple;
+    SumAccum<INT> @parentsCount;
+    ListAccum<VERTEX<GitCommit>> @@mergeCommitsList;
+    repos = {GitRepository.*};
+    commits = {GitCommit.*};
+
+    selectedRepo =  
+            SELECT r 
+            FROM repos:r 
+            WHERE r.name == repo_name;
+
+    selectedCommits =   
+            SELECT comm
+            FROM selectedRepo:repo -(CONTAINS>)- commits:comm -(PARENT>)- GitCommit:parent
+            ACCUM comm.@parentsCount += 1;
+
+    mergeCommits = 
+            SELECT comm
+            FROM selectedCommits:comm
+            WHERE comm.@parentsCount > 1
+            ACCUM  @@mergeCommitsList += comm;
+  
+    PRINT @@mergeCommitsList.size() as mergeCount;
+}
+
+INSTALL QUERY CountMergeCommits

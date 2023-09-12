@@ -84,7 +84,7 @@ services:
       - hadoop_namenode:/hadoop/dfs/name
       - ../datasets:/data
     environment:
-      CLUSTER_NAME: "test"
+      CLUSTER_NAME: "BD_2023"
     env_file:
       - ./hadoop.env
 
@@ -112,7 +112,7 @@ services:
     env_file:
       - ./hadoop.env
 
-  nodemanager1:
+  nodemanager:
     networks:
       - playground
     image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
