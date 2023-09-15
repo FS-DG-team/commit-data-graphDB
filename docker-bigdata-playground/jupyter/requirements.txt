@@ -1,3 +1,4 @@
-pandas
 jupyter_contrib_nbextensions
+pandas
+PyGithub
 pyyaml
