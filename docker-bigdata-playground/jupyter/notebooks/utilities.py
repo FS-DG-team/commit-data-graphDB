@@ -1,8 +1,10 @@
+import inspect
 from pyspark.sql import SparkSession
 from pyspark.sql.dataframe import DataFrame
 from enum import Enum
 import yaml
 import os
+import github
 
 SPARK_MASTER_URL = "spark://spark-master:7077"
 
@@ -90,3 +92,79 @@ def set_df_columns_nullable(spark, df, column_list, nullable=True):
             struct_field.nullable = nullable
     df_mod = spark.createDataFrame(df.rdd, df.schema)
     return df_mod
+
+
+# GitHub API Data integration
+
+
+def objHandle(obj):
+    try:
+        return expandGithubObject(obj)
+    except:
+        return None
+
+
+def expandGithubObject(object):
+    if isinstance(object, list):
+        return list(map(lambda x: objHandle(x), object))
+    elif isinstance(object, github.PaginatedList.PaginatedList):
+        return list(map(lambda x: objHandle(x), object))
+    elif isinstance(object, github.NamedUser.NamedUser):
+        return object.login
+    elif isinstance(object, github.Branch.Branch):
+        return object.name
+    elif isinstance(object, github.GitRef.GitRef):
+        return object.ref
+    elif isinstance(object, github.IssueEvent.IssueEvent):
+        return object.event
+    elif isinstance(object, github.Label.Label):
+        return object.name
+    elif isinstance(object, github.StatsCodeFrequency.StatsCodeFrequency):
+        return collectAttributes(object)
+    elif isinstance(object, github.StatsCommitActivity.StatsCommitActivity):
+        return collectAttributes(object)
+    elif isinstance(object, github.StatsParticipation.StatsParticipation):
+        return collectAttributes(object)
+    elif isinstance(object, github.StatsPunchCard.StatsPunchCard):
+        return collectAttributes(object)
+    else:
+        return object
+
+
+def collectAttributes(object, features=None):
+    def isAnAttribute(x): return not (x.startswith(
+        '__') or x.startswith('_') or x.startswith('get'))
+
+    attributes = list(filter(isAnAttribute, dir(object)))
+
+    result = {}
+    for attribute in attributes:
+        if attribute not in features:
+            continue
+        try:
+            result[attribute] = expandGithubObject(eval(f"object.{attribute}"))
+        except Exception as e:
+            print(f'{attribute}: {e}')
+
+    return result
+
+
+def collectMethodsValue(object):
+    def isAGetMethod(x): return x.startswith('get')
+
+    def isAZeroParamMethod(x):
+        return len(inspect.getfullargspec(getattr(object, x)).args) == 1
+
+    methods = list(
+        filter(lambda x: isAGetMethod(x) and isAZeroParamMethod(x), dir(object))
+    )
+
+    result = {}
+    for method in methods:
+        try:
+            result[method.replace("get_", "")] = expandGithubObject(
+                getattr(object, method)())
+        except Exception as e:
+            print(f'{method}: {e}')
+
+    return result
