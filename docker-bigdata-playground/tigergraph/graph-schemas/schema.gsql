@@ -1,6 +1,6 @@
 # vertices creation
 CREATE VERTEX GitContributor (PRIMARY_ID email STRING, name STRING) WITH primary_id_as_attribute="true"
-CREATE VERTEX GitRepository (PRIMARY_ID name STRING, watch_count UINT) WITH primary_id_as_attribute="true"
+CREATE VERTEX GitRepository (PRIMARY_ID name STRING, watch_count UINT, forks_count UINT, stargazers_count UINT, open_issues_count UINT, topics STRING) WITH primary_id_as_attribute="true"
 CREATE VERTEX GitLanguage (PRIMARY_ID name STRING) WITH primary_id_as_attribute="true"
 CREATE VERTEX GitLicense (PRIMARY_ID name STRING) WITH primary_id_as_attribute="true"
 CREATE VERTEX GitCommit (PRIMARY_ID id STRING, title STRING, message STRING) WITH primary_id_as_attribute="true"
@@ -23,7 +23,7 @@ CREATE GRAPH Git (GitContributor, GitCommit, GitRepository, GitLanguage, GitFile
 
 CREATE QUERY TopNAuthorsWithMoreContributes(INT N) FOR GRAPH Git
 {
-    TYPEDEF tuple<VERTEX<GitContributor> contributor, INT repo_count> Result_Tuple;
+    TYPEDEF TUPLE<VERTEX<GitContributor> contributor, INT repo_count> Result_Tuple;
     MapAccum<VERTEX<GitContributor>, SetAccum<STRING>> @@contributors2repos;
     HeapAccum<Result_Tuple>(N, repo_count DESC) @@contributors2count;
 
@@ -44,7 +44,7 @@ INSTALL QUERY TopNAuthorsWithMoreContributes
 
 CREATE QUERY ReposWithMoreThenPercentageOnLenguage(FLOAT perc, STRING lang) FOR GRAPH Git
 {
-    TYPEDEF tuple<VERTEX<GitRepository> repo, FLOAT percentage> Result_Tuple;
+    TYPEDEF TUPLE<VERTEX<GitRepository> repo, FLOAT percentage> Result_Tuple;
     MapAccum <VERTEX<GitRepository>, MapAccum<STRING, FLOAT>> @@repos2lang2bytesCount;
     ListAccum<Result_Tuple> @@result;
 
@@ -75,7 +75,7 @@ INSTALL QUERY ReposWithMoreThenPercentageOnLenguage
 
 CREATE QUERY CountMergeCommits(STRING repo_name) FOR GRAPH Git
 {
-    TYPEDEF tuple<INT mergeCount> Result_Tuple;
+    TYPEDEF TUPLE<INT mergeCount> Result_Tuple;
     SumAccum<INT> @parentsCount;
     ListAccum<VERTEX<GitCommit>> @@mergeCommitsList;
     repos = {GitRepository.*};
@@ -101,3 +101,232 @@ CREATE QUERY CountMergeCommits(STRING repo_name) FOR GRAPH Git
 }
 
 INSTALL QUERY CountMergeCommits
+
+CREATE QUERY tg_label_prop (SET<STRING> v_type_set, SET<STRING> e_type_set, INT maximum_iteration, INT print_limit, 
+  BOOL print_results = TRUE, STRING file_path = "", STRING result_attribute = "")  SYNTAX V1 
+{
+    /*
+    First Author: <First Author Name>
+    First Commit Date:  <First Commit Date>
+
+    Recent Author: <Recent Commit Author Name>
+    Recent Commit Date: <Recent Commit Date>
+
+
+    Repository:
+        https://github.com/tigergraph/gsql-graph-algorithms/tree/master/algorithms/Community
+
+    Maturity:
+        Production
+
+    Description: 
+        Partition the vertices into communities, according to the Label Propagation method.
+        Indicate community membership by assigning each vertex a community ID.
+
+    Publications:
+        NA
+
+    TigerGraph Documentation:
+        https://docs.tigergraph.com/graph-ml/current/community-algorithms/label-propagation
+
+    Parameters:
+        v_type_set:
+            Names of vertex types to use
+        e_type_set:
+            Names of edge types to use
+        maximum_iteration:
+            Number of maximum iteration of the algorithm
+        print_limit:
+            If >=0, max number of vertices to output to JSON.
+        print_results:
+            If True, output JSON to standard output
+        result_attribute:
+            If not empty, store community id values (INT) to this attribute
+        file_path:
+            If not empty, write output to this file.
+    */
+
+    OrAccum @@or_changed = true;
+    MapAccum<INT, INT> @map;     # <communityId, numNeighbors>
+    MapAccum<INT, INT> @@comm_sizes_map;   # <communityId, members>
+    SumAccum<INT> @sum_label, @sum_num;  
+    FILE f (file_path);
+    Start = {v_type_set};
+
+    # Assign unique labels to each vertex
+    Start = SELECT s 
+            FROM Start:s 
+            ACCUM s.@sum_label = getvid(s);
+
+    # Propagate labels to neighbors until labels converge or the max iterations is reached
+    WHILE @@or_changed == true LIMIT maximum_iteration DO
+        @@or_changed = false;
+        Start = SELECT s 
+                FROM Start:s -(e_type_set:e)- :t
+                ACCUM t.@map += (s.@sum_label -> 1)  # count the occurrences of neighbor's labels
+                POST-ACCUM
+                    INT max_v = 0,
+                    INT label = 0,
+                    # Iterate over the map to get the neighbor label that occurs most often
+                    FOREACH (k,v) IN t.@map DO
+                        CASE WHEN v > max_v THEN
+                            max_v = v,
+                            label = k
+                        END
+                    END,
+                    # When the neighbor search finds a label AND it is a new label
+                    # AND the label's count has increased, update the label.
+                    CASE WHEN label != 0 AND t.@sum_label != label AND max_v > t.@sum_num THEN
+                        @@or_changed += true,
+                        t.@sum_label = label,
+                        t.@sum_num = max_v
+                    END,
+                    t.@map.clear();
+    END;
+
+    Start = {v_type_set};
+    Start =  SELECT s 
+            FROM Start:s
+            POST-ACCUM 
+                IF result_attribute != "" THEN 
+                    s.setAttr(result_attribute, s.@sum_label) 
+                END,
+                
+                IF file_path != "" THEN 
+                    f.println(s, s.@sum_label) 
+                END,
+                
+                IF print_results THEN 
+                    @@comm_sizes_map += (s.@sum_label -> 1) 
+                END
+            LIMIT print_limit;
+
+    IF print_results THEN 
+        PRINT @@comm_sizes_map;
+        PRINT Start[Start.@sum_label];
+    END;
+}
+
+INSTALL QUERY tg_label_prop
+
+CREATE QUERY tg_pagerank (STRING v_type, STRING e_type,
+ FLOAT max_change=0.001, INT maximum_iteration=25, FLOAT damping=0.85, INT top_k = 100,
+ BOOL print_results = TRUE, STRING result_attribute =  "", STRING file_path = "",
+ BOOL display_edges = FALSE) SYNTAX V1 
+{
+
+    /*
+    First Author: <First Author Name>
+    First Commit Date:  <First Commit Date>
+
+    Recent Author: <Recent Commit Author Name>
+    Recent Commit Date: <Recent Commit Date>
+
+
+    Repository:
+        https://github.com/tigergraph/gsql-graph-algorithms/tree/master/algorithms/Centrality
+
+    Maturity:
+        Production
+
+    Description: 
+        Compute the pageRank score for each vertex in the GRAPH
+        In each iteration, compute a score for each vertex:
+            score = (1-damping) + damping*sum(received scores FROM its neighbors).
+        The pageRank algorithm stops when either of the following is true:
+        a) it reaches maximum_iteration iterations;
+        b) the max score change for any vertex compared to the last iteration <= max_change.
+
+        This query supports only taking in a single edge for the time being (8/13/2020).
+
+    Publications:
+        http://infolab.stanford.edu/~backrub/google.html
+
+    TigerGraph Documentation:
+        https://docs.tigergraph.com/graph-ml/current/centrality-algorithms/pagerank
+
+    Parameters:
+        v_type:
+            vertex types to traverse
+        print_results:
+            If True, print JSON output
+        e_type:
+            edge types to traverse
+        result_attribute:
+            INT attribute to store results to
+        file_path:
+            file to write CSV output to
+        top_k:
+            #top scores to output
+        display_edges:
+            output edges for visualization
+        max_change:
+            max allowed change between iterations to achieve convergence
+        damping:
+            importance of traversal vs. random teleport
+    */
+
+    TYPEDEF TUPLE<VERTEX Vertex_ID, FLOAT score> Vertex_Score;
+    HeapAccum<Vertex_Score>(top_k, score DESC) @@top_scores_heap;
+    SetAccum<VERTEX> @@top_vertices;      # vertices with top score
+    MaxAccum<FLOAT> @@max_diff = 9999;    # max score change in an iteration
+    SumAccum<FLOAT> @sum_recvd_score = 0; # sum of scores each vertex receives FROM neighbors
+    SumAccum<FLOAT> @sum_score = 1;           # initial score for every vertex is 1.
+    SetAccum<EDGE> @@edge_set;             # list of all edges, if display is needed
+    FILE f (file_path);
+
+    # PageRank iterations	
+    Start = {v_type};                     # Start with all vertices of specified type(s)
+    WHILE @@max_diff > max_change 
+        LIMIT maximum_iteration DO
+            @@max_diff = 0;
+        V = SELECT s
+        FROM Start:s -(e_type:e)- v_type:t
+        ACCUM 
+                t.@sum_recvd_score += s.@sum_score/(s.outdegree(e_type)) 
+        POST-ACCUM 
+                s.@sum_score = (1.0-damping) + damping * s.@sum_recvd_score,
+            s.@sum_recvd_score = 0,
+            @@max_diff += abs(s.@sum_score - s.@sum_score);
+    END; # END WHILE loop
+
+    # Output
+    IF file_path != "" THEN
+        f.println("Vertex_ID", "PageRank");
+    END;
+    V = SELECT s 
+        FROM Start:s
+        POST-ACCUM 
+            IF result_attribute != "" THEN 
+                s.setAttr(result_attribute, s.@sum_score) 
+            END,
+    
+        IF file_path != "" THEN 
+                f.println(s, s.@sum_score) 
+            END,
+    
+        IF print_results THEN 
+                @@top_scores_heap += Vertex_Score(s, s.@sum_score) 
+            END;
+
+    IF print_results THEN
+        PRINT @@top_scores_heap;
+        IF display_edges THEN
+            
+            FOREACH vert IN @@top_scores_heap DO
+                @@top_vertices += vert.Vertex_ID;
+            END;
+        
+            Top = {@@top_vertices};
+            Top = SELECT s
+                FROM Top:s -(e_type:e)- v_type:t
+                WHERE @@top_vertices.contains(t)
+                ACCUM @@edge_set += e;
+            
+            PRINT @@edge_set;
+            PRINT Top;
+        END;
+    END;
+}
+
+INSTALL QUERY tg_pagerank
