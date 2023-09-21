@@ -1,0 +1,260 @@
+version: '3'
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode:
+  hadoop_historyserver:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
+  arangodb_data:
+  arangodb_apps_data:
+  tigergraph_data:
+
+networks:
+  playground:
+      driver: bridge
+
+services:
+
+  ##########
+  # SPARK  #
+  ##########
+  spark-master:
+    networks:
+        - playground
+    image: bde2020/spark-master:3.3.0-hadoop3.3
+    container_name: spark-master
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    environment:
+      INIT_DAEMON_STEP: "setup_spark"
+
+  spark-worker-1:
+    networks:
+      - playground
+    image: bde2020/spark-worker:3.3.0-hadoop3.3
+    container_name: spark-worker-1
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081"
+    environment:
+      SPARK_MASTER: "spark://spark-master:7077"
+
+#  spark-worker-2:
+#    networks:
+#      - playground
+#    image: bde2020/spark-worker:3.3.0-hadoop3.3
+#    container_name: spark-worker-2
+#    depends_on:
+#      - spark-master
+#    ports:
+#      - "8082:8081"
+#    environment:
+#      SPARK_MASTER: "spark://spark-master:7077"
+  
+  spark-history-server:
+    networks:
+      - playground
+    image: bde2020/spark-history-server:3.3.0-hadoop3.3
+    container_name: spark-history-server
+    depends_on:
+      - spark-master
+    ports:
+      - "18081:18081"
+    volumes:
+      - /tmp/spark-events-local:/tmp/spark-events
+
+  ##########
+  # HADOOP #
+  ##########
+  namenode:
+    networks:
+      - playground
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    restart: always
+    ports:
+      - 9870:9870
+      - 9000:9000
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+      - ../datasets:/data
+    environment:
+      CLUSTER_NAME: "BD_2023"
+    env_file:
+      - ./hadoop.env
+
+  datanode:
+    networks:
+      - playground
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    restart: always
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+  
+  resourcemanager:
+    networks:
+      - playground
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864"
+    env_file:
+      - ./hadoop.env
+
+  nodemanager:
+    networks:
+      - playground
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+  
+  historyserver:
+    networks:
+      - playground
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: historyserver
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+    volumes:
+      - hadoop_historyserver:/hadoop/yarn/timeline
+    env_file:
+      - ./hadoop.env
+  
+  # ########
+  # # HIVE #
+  # ########
+  # hive-server:
+  #   networks:
+  #     - playground
+  #   image: bde2020/hive:2.3.2-postgresql-metastore
+  #   env_file:
+  #     - ./hadoop.env
+  #   environment:
+  #     HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+  #     SERVICE_PRECONDITION: "hive-metastore:9083"
+  #   ports:
+  #     - "10000:10000"
+
+  # hive-metastore:
+  #   networks:
+  #     - playground
+  #   image: bde2020/hive:2.3.2-postgresql-metastore
+  #   env_file:
+  #     - ./hadoop.env
+  #   command: /opt/hive/bin/hive --service metastore
+  #   environment:
+  #     SERVICE_PRECONDITION: "namenode:9000 datanode:9864 hive-metastore-postgresql:5432"
+  #   ports:
+  #     - "9083:9083"
+
+  # hive-metastore-postgresql:
+  #   networks:
+  #     - playground
+  #   image: bde2020/hive-metastore-postgresql:2.3.0
+
+  ####################
+  # Jupyter Notebook #
+  ####################
+  jupyter-notebooks:
+      networks:
+        - playground
+      build: ./jupyter/
+      ports:
+        - "8888:8888"
+      volumes:
+        - ./jupyter/notebooks:/home/jovyan/notebooks
+      container_name: jupyter-notebooks
+      environment:
+        CONNECTORS_DEFAULT_OPTIONS: "default-options.yaml"
+
+  ####################
+  #       NEO4J      #
+  ####################
+  neo4j:
+    networks:
+      - playground
+    image: neo4j:latest
+    container_name: neo4j
+    healthcheck:
+      test: ["CMD-SHELL", "wget http://localhost:7474 || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 3s
+    ports:
+      - "7474:7474" # GUI
+      - "7687:7687" # CLI
+    environment:
+      NEO4J_AUTH: "neo4j/password"
+      NEO4J_PLUGINS: '["graph-data-science"]'
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
+      
+  ####################
+  #    ARANGO DB     #
+  ####################
+  arangodb:
+    networks:
+      - playground
+    image: arangodb:latest
+    container_name: arangodb
+    healthcheck:
+      test: ["CMD-SHELL", "wget http://localhost:8529 || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 3s
+    ports:
+      - "8529:8529" # GUI
+    environment:
+      ARANGO_ROOT_PASSWORD: "password"
+      ARANGO_NO_AUTH: "1"
+    volumes:
+      - arangodb_data:/var/lib/arangodb3
+      - arangodb_apps_data:/var/lib/arangodb3-apps
+
+  
+  ####################
+  #    TIGERGRAPH    #
+  ####################
+  tigergraph:
+    networks:
+      - playground
+    build: ./tigergraph/
+    container_name: tigergraph
+    volumes:
+      - ./tigergraph/graph-schemas/:/home/tigergraph/graph-schemas/
+      - tigergraph_data:/home/tigergraph/mydata
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:9000/echo || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 3s
+    ports:
+      - "14240:14240" # GUI
+      - "9001:9000" # CLI
+      #- "14241:14241" # RESTPP
+      #- "14243:14243" # GSQL
+    environment:
+      TIGERGRAPH_USERNAME: "root"
+      TIGERGRAPH_PASSWORD: "password"

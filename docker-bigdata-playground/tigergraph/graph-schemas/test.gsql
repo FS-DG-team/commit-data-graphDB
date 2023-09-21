@@ -1,0 +1,21 @@
+# vertices creation
+CREATE VERTEX Person (PRIMARY_ID id STRING, name STRING)
+
+# edges creation
+CREATE DIRECTED EDGE FRIEND (From Person, To Person)
+
+# graph creation
+CREATE GRAPH Test (Person, FRIEND)
+USE GRAPH Test
+
+# query
+CREATE QUERY Friends() FOR GRAPH Test {
+    MapAccum<STRING, STRING> @@friends;
+    start = {Person.*};
+
+    v = SELECT p FROM start:p -(FRIEND>)- Person:n
+        ACCUM @@friends += (p.name -> n.name);
+    PRINT @@friends;
+}
+
+INSTALL QUERY Friends

@@ -160,9 +160,20 @@ cython_debug/
 #.idea/
 
 
-# key json big table
+# big table key
 key/*
+
+# readme file
 !*/README.md
 
-/dataset/*
+/datasets/*
 dataset.zip
+
+
+# data files
+*.json
+*.zip
+
+
+# connectors dependencies
+!**/*.jar
