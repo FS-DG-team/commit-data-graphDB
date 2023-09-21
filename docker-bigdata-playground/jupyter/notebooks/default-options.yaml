@@ -12,6 +12,7 @@ arangodb:
   collection: Test
   confirmTruncate: true
   overwrite.mode: replace
+  timeout: 999999
 
 tigergraph:
   url: jdbc:tg:http://tigergraph:14240
