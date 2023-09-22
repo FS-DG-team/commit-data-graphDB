@@ -46,24 +46,24 @@ Connect to Jupyter Hub by accessing container logs:
 Click on the last line in the logs, enter Jupyter Hub in your brower and follow instructions in the notebooks/BigDataPipeline.ipynb
 
 <h1>Proposed Big Data Pipeline</h1>
-<p align="center"><img src="/plot_results/architecture.png" width="700" /></p>
+<p align="center"><img src="/plot_results/architecture.png" width="70%" /></p>
 <h1>Docker Architecture</h1>
-<p align="center"><img src="/plot_results/docker_architecture.png" width="700" /></p>
+<p align="center"><img src="/plot_results/docker_architecture.png" width="70%" /></p>
 <h1>Graph Schema Adopted</h1>
-<p align="center"><img src="/plot_results/graph_schema.png" width="700" /></p>
+<p align="center"><img src="/plot_results/graph_schema.png" width="70%" /></p>
 <h1>Community Detection for the Scenario 4</h1>
 <p align="center">
-   <img src="/plot_results/OpenOrdLabelProp_10.png" width="500" />
-   <img src="/plot_results/OpenOrdLabelProp_100.png" width="500" />
+   <img src="/plot_results/OpenOrdLabelProp_10.png" width="40%" />
+   <img src="/plot_results/OpenOrdLabelProp_100.png" width="40%" />
 </p>
 <p align="center">
-   <img src="/plot_results/OpenOrdLabelProp_1000.png" width="500" />
-   <img src="/plot_results/OpenOrdLabelProp_2000.png" width="500" />
+   <img src="/plot_results/OpenOrdLabelProp_1000.png" width="40%" />
+   <img src="/plot_results/OpenOrdLabelProp_2000.png" width="40%" />
 </p>
 <h1>Performance Results</h1>
-<p align="center"><img src="/plot_results/wtime.png" width="700" /></p>
-<p align="center"><img src="/plot_results/scenario1.png" width="700" /></p>
-<p align="center"><img src="/plot_results/scenario2.png" width="700" /></p>
-<p align="center"><img src="/plot_results/scenario3.png" width="700" /></p>
-<p align="center"><img src="/plot_results/scenario4.png" width="700" /></p>
-<p align="center"><img src="/plot_results/scenario5.png" width="700" /></p>
+<p align="center"><img src="/plot_results/wtime.png" width="70%" /></p>
+<p align="center"><img src="/plot_results/scenario1.png" width="70%" /></p>
+<p align="center"><img src="/plot_results/scenario2.png" width="70%" /></p>
+<p align="center"><img src="/plot_results/scenario3.png" width="70%" /></p>
+<p align="center"><img src="/plot_results/scenario4.png" width="70%" /></p>
+<p align="center"><img src="/plot_results/scenario5.png" width="70%" /></p>
