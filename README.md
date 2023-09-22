@@ -1,5 +1,5 @@
 # Commit-data-graphDB
-Final project for a university course on 'Big Data.' The project's objective is to compare various Graph Database Management System (GDBMS) solutions in terms of usability and time performance within the domain of GitHub data analysis. This involves defining different analytical scenarios and utilizing different batches of the original Big Query dataset.
+Final project for a university course on 'Big Data.' The project's objective is to compare various GDBMS solutions in terms of usability and time performance within the domain of GitHub data analysis. This involves defining different analytical scenarios and utilizing different batches of the original Big Query dataset.
 The entire project is built within a Dockerized environment to ensure isolation and the potential for future scalability to a cluster of nodes with fault tolerance. Additionally, this project incorporates several technologies, including Spark for preprocessing, Neo4j, TigerGraph, and ArangoDB. 
 
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/big-data-europe/Lobby)
