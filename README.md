@@ -50,7 +50,7 @@ Click on the last line in the logs, enter Jupyter Hub in your brower and follow 
 <h1>Docker Architecture</h1>
 <p align="center"><img src="/plot_results/docker_architecture.png" width="700" /></p>
 <h1>Graph Schema Adopted</h1>
-<p align="center"><img src="/plot_results/graph_schema.png.png" width="700" /></p>
+<p align="center"><img src="/plot_results/graph_schema.png" width="700" /></p>
 <h1>Community Detection for the Scenario 4</h1>
 <p align="center">
    <img src="/plot_results/OpenOrdLabelProp_10.png" width="500" />
